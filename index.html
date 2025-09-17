@@ -5,339 +5,172 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Stuf — Ancillary Revenue Calculator</title>
 
-<!-- jsPDF -->
+<!-- jsPDF and AutoTable -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
 <style>
-  :root{
-    --stuf-purple:#5e3db3;
-    --muted:#6b7280;
-    --bg:#f6f7fb;
-  }
-  body{
-    margin:0;
-    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-    background:var(--bg);
-    color:#111827;
-    -webkit-font-smoothing:antialiased;
-    padding:28px;
-  }
-  .card{
-    max-width:720px;margin:28px auto;background:#fff;border-radius:12px;padding:26px;
-    box-shadow:0 8px 30px rgba(16,24,40,0.06);
-  }
-  header{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-  header img{height:34px}
+  :root{--stuf-purple:#5e3db3;--bg:#f6f7fb;}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:#111827;padding:28px}
+  .card{max-width:720px;margin:28px auto;background:#fff;border-radius:12px;padding:26px;box-shadow:0 8px 30px rgba(16,24,40,0.06)}
   h1{margin:0;font-size:20px;color:var(--stuf-purple)}
-  label{display:block;font-weight:600;margin-top:12px;color:#111827}
-  input[type=number], input[type=email], select{
-    width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9ef;margin-top:6px;font-size:14px;
-  }
-  .row{display:flex;gap:12px}
-  .button{
-    display:inline-block;padding:12px 16px;border-radius:10px;border:none;background:var(--stuf-purple);color:#fff;
-    cursor:pointer;font-weight:700;margin-top:14px;width:100%;
-  }
+  label{display:block;font-weight:600;margin-top:12px}
+  input,select{width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;margin-top:6px}
+  .button{padding:12px 16px;border-radius:10px;border:none;background:var(--stuf-purple);color:#fff;cursor:pointer;font-weight:700;margin-top:14px;width:100%}
   .button.secondary{background:#111827}
-  .note{color:var(--muted);font-size:13px;margin-top:8px}
   .results{margin-top:20px;padding:16px;border-radius:10px;background:#fbfbff}
-  .result-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f1f7}
-  .result-row:last-child{border-bottom:none}
-  .label{font-weight:600;color:#374151}
-  .value{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:16px}
-  /* Pixelated placeholder */
-  .pixel{
-    font-family: "Courier New", Courier, monospace;
-    letter-spacing:2px;
-    color:#111827;
-    display:inline-block;
-  }
-  .pixel.flicker{
-    color:#111827;
-    opacity:0.95;
-    animation: flicker 0.95s infinite;
-    text-shadow:0 0 4px rgba(94,61,179,0.15);
-  }
-  @keyframes flicker{
-    0%{opacity:0.95;transform:translateY(0)}
-    10%{opacity:0.6;transform:translateY(-1px)}
-    30%{opacity:0.9;transform:translateY(0)}
-    50%{opacity:0.65;transform:translateY(1px)}
-    70%{opacity:0.9;transform:translateY(0)}
-    100%{opacity:0.95;transform:translateY(0)}
-  }
-  /* popup */
-  .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:220}
+  .result-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee}
+  .pixel{letter-spacing:2px;color:#111827;display:inline-block}
+  .pixel.flicker{animation:flicker .9s infinite}
+  @keyframes flicker{0%,100%{opacity:.9}50%{opacity:.5}}
+  .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);z-index:220}
   .modal{background:#fff;padding:20px;border-radius:12px;min-width:320px;box-shadow:0 8px 30px rgba(2,6,23,0.2);text-align:center}
-  .cta-row{margin-top:18px}
   .hidden{display:none}
-  footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
 </style>
 </head>
 <body>
   <div class="card">
-    <header>
-      <img alt="Stuf" src="https://www.stufstorage.com/wp-content/uploads/2022/01/stuf-logo.png">
-      <div>
-        <h1>Ancillary Revenue Calculator</h1>
-        <div class="note">Enter property details. Numbers are pixelated until you enter an email to unlock the full report.</div>
-      </div>
-    </header>
+    <h1>Stuf Storage Ancillary Revenue Calculator</h1>
+    <p>Enter property details below. Results are blurred until you enter your email to unlock the full report.</p>
 
-    <!-- Inputs -->
-    <div>
-      <label>Available Space (sq. ft.)</label>
-      <input id="inputSpace" type="number" placeholder="e.g. 10000" min="0">
+    <label>Available Space (sq. ft.)</label>
+    <input id="inputSpace" type="number" placeholder="e.g. 10000">
 
-      <label>Property type</label>
-      <select id="inputType">
-        <option value="Office">Office</option>
-        <option value="Multifamily">Multifamily</option>
-        <option value="Retail">Retail</option>
-        <option value="Mixed-use">Mixed-use</option>
-        <option value="Industrial">Industrial</option>
-        <option value="Hotel">Hotel</option>
-      </select>
+    <label>Property type</label>
+    <select id="inputType">
+      <option>Office</option>
+      <option>Multifamily</option>
+      <option>Retail</option>
+      <option>Mixed-use</option>
+      <option>Industrial</option>
+      <option>Hotel</option>
+    </select>
 
-      <label>Market (priority)</label>
-      <select id="inputMarket">
-        <option value="NY">New York</option>
-        <option value="BOS">Boston</option>
-        <option value="DC">Washington, D.C.</option>
-        <option value="SF">San Francisco</option>
-        <option value="LA">Los Angeles</option>
-        <option value="ATL">Atlanta</option>
-        <option value="SEA">Seattle</option>
-      </select>
+    <label>Market</label>
+    <select id="inputMarket">
+      <option value="NY">New York</option>
+      <option value="BOS">Boston</option>
+      <option value="DC">Washington, D.C.</option>
+      <option value="SF">San Francisco</option>
+      <option value="LA">Los Angeles</option>
+      <option value="ATL">Atlanta</option>
+      <option value="SEA">Seattle</option>
+    </select>
 
-      <button class="button" id="btnCalc">Calculate</button>
+    <button class="button" id="btnCalc">Calculate</button>
+
+    <div id="resultsCard" class="results hidden">
+      <div class="result-row"><span>Storage SF (70%)</span><span id="valStorage" class="pixel">████</span></div>
+      <div class="result-row"><span>Rent per SF</span><span id="valRent" class="pixel">██</span></div>
+      <div class="result-row"><span>Monthly Revenue</span><span id="valMonthly" class="pixel">████</span></div>
+      <div class="result-row"><span>Annual Revenue</span><span id="valAnnual" class="pixel">████</span></div>
     </div>
 
-    <!-- Results (labels visible, numbers pixelated) -->
-    <div id="resultsCard" class="results hidden" aria-live="polite">
-      <div class="result-row">
-        <div class="label">Storage SF (70% efficiency)</div>
-        <div class="value"><span id="valStorage" class="pixel">█████</span></div>
-      </div>
-
-      <div class="result-row">
-        <div class="label">Applied Rent / SF</div>
-        <div class="value"><span id="valRent" class="pixel">██/SF</span></div>
-      </div>
-
-      <div class="result-row">
-        <div class="label">Estimated Monthly Revenue</div>
-        <div class="value"><span id="valMonthly" class="pixel">████,███</span></div>
-      </div>
-
-      <div class="result-row">
-        <div class="label">Estimated Annual Revenue</div>
-        <div class="value"><span id="valAnnual" class="pixel">████,███</span></div>
-      </div>
-
-      <div class="note" style="text-align:center;margin-top:10px">Numbers are pixelated. Enter your email to unlock the full report.</div>
-    </div>
-
-    <!-- Actions (appear after unlock) -->
-    <div id="actions" class="hidden cta-row">
+    <div id="actions" class="hidden">
       <button id="downloadBtn" class="button">Download My Report</button>
-      <button id="talkBtn" class="button secondary" style="margin-top:10px">Talk to Stuf</button>
+      <a href="https://www.stufstorage.com/contact" target="_blank"><button class="button secondary">Talk to Stuf</button></a>
     </div>
-
-    <footer>© 2025 Stuf Storage</footer>
   </div>
 
   <!-- Email popup -->
-  <div id="overlay" class="overlay" role="dialog" aria-modal="true">
+  <div id="overlay" class="overlay">
     <div class="modal">
-      <h3>Enter your email to generate your full report</h3>
-      <input id="emailInput" type="email" placeholder="you@company.com" style="width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9ef;margin-top:12px">
-      <div style="margin-top:14px">
-        <button id="submitEmail" class="button">Generate My Report</button>
-      </div>
+      <h3>Enter your email to generate your report</h3>
+      <input id="emailInput" type="email" placeholder="you@company.com">
+      <button id="submitEmail" class="button">Generate Report</button>
     </div>
   </div>
 
 <script>
-/* --- Business rules --- */
 const EFFICIENCY = 0.7;
-function rentForMarket(m){ if(m==='NY') return 30; if(m==='ATL' || m==='SEA') return 15; return 20; }
+function rentForMarket(m){if(m==='NY')return 30;if(m==='ATL'||m==='SEA')return 15;return 20;}
 
-/* --- Elements --- */
-const inputSpace = document.getElementById('inputSpace');
-const inputType  = document.getElementById('inputType');
-const inputMarket= document.getElementById('inputMarket');
-const btnCalc    = document.getElementById('btnCalc');
+const btnCalc=document.getElementById('btnCalc'),resultsCard=document.getElementById('resultsCard'),
+valStorage=document.getElementById('valStorage'),valRent=document.getElementById('valRent'),
+valMonthly=document.getElementById('valMonthly'),valAnnual=document.getElementById('valAnnual'),
+overlay=document.getElementById('overlay'),submitEmail=document.getElementById('submitEmail'),
+emailInput=document.getElementById('emailInput'),actions=document.getElementById('actions'),
+downloadBtn=document.getElementById('downloadBtn');
 
-const resultsCard= document.getElementById('resultsCard');
-const valStorage = document.getElementById('valStorage');
-const valRent    = document.getElementById('valRent');
-const valMonthly = document.getElementById('valMonthly');
-const valAnnual  = document.getElementById('valAnnual');
+let calcSnapshot=null;
 
-const overlay    = document.getElementById('overlay');
-const submitEmail= document.getElementById('submitEmail');
-const emailInput = document.getElementById('emailInput');
+btnCalc.addEventListener('click',()=>{
+  const space=parseFloat(document.getElementById('inputSpace').value);
+  const type=document.getElementById('inputType').value;
+  const market=document.getElementById('inputMarket').value;
+  if(!space){alert("Enter space");return}
+  const rent=rentForMarket(market),storageSF=Math.round(space*EFFICIENCY),
+  annual=Math.round(storageSF*rent),monthly=Math.round(annual/12);
+  calcSnapshot={space,type,market,rent,storageSF,annual,monthly};
+  resultsCard.classList.remove('hidden');
+  [valStorage,valRent,valMonthly,valAnnual].forEach(el=>{el.textContent="████";el.classList.add('flicker')});
+  setTimeout(()=>{overlay.style.display='flex'},3000);
+});
 
-const actions    = document.getElementById('actions');
-const downloadBtn= document.getElementById('downloadBtn');
-const talkBtn    = document.getElementById('talkBtn');
+submitEmail.addEventListener('click',()=>{
+  if(!emailInput.value.includes('@')){alert("Enter valid email");return}
+  overlay.style.display='none';
+  valStorage.textContent=calcSnapshot.storageSF+" SF";
+  valRent.textContent="$"+calcSnapshot.rent+"/SF";
+  valMonthly.textContent="$"+calcSnapshot.monthly.toLocaleString();
+  valAnnual.textContent="$"+calcSnapshot.annual.toLocaleString();
+  [valStorage,valRent,valMonthly,valAnnual].forEach(el=>el.classList.remove('flicker'));
+  actions.classList.remove('hidden');
+});
 
-let calcSnapshot = null;
-let popupTimer = null;
+downloadBtn.addEventListener('click',()=>{
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'pt',format:'a4'});
+  const purple=[94,61,179];
 
-/* --- Helpers --- */
-function formatNumber(n){
-  if (n === null || n === undefined || Number.isNaN(n)) return '0';
-  return Math.round(n).toLocaleString();
-}
-function formatCurrency(n){
-  return '$' + formatNumber(n);
-}
-function pixelizeFromString(str){
-  // keep punctuation (commas, $, %) but replace digits/letters with block chars
-  return str.replace(/[A-Za-z0-9]/g, function(ch){
-    // vary block characters a bit for a more 'pixel' feel
-    const blocks = ['█','▓','▒','░'];
-    return blocks[Math.floor(Math.random()*blocks.length)];
-  });
-}
-function showPixelizedValue(el, realValueStr){
-  // store real value on element for reveal
-  el.dataset.real = realValueStr;
-  el.textContent = pixelizeFromString(realValueStr);
-  el.classList.add('flicker');
-}
-/* Add small random animation delays so they don't flicker perfectly together */
-function randomizeFlicker(el){
-  const delay = (Math.random()*600) + 'ms';
-  el.style.animationDelay = delay;
-}
+  // Header
+  doc.setFillColor(...purple);doc.rect(0,0,doc.internal.pageSize.getWidth(),60,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(14);doc.setFont('helvetica','bold');
+  doc.text("Landlord Revenue Report",doc.internal.pageSize.getWidth()/2,35,{align:'center'});
+  let y=90;
 
-/* --- Calculate & show pixelized numbers --- */
-btnCalc.addEventListener('click', (e) => {
-  e.preventDefault();
-  const space = parseFloat(inputSpace.value);
-  if (!space || space <= 0) { alert('Please enter the available square footage.'); return; }
-
-  const type = inputType.value;
-  const market= inputMarket.value;
-  const rent = rentForMarket(market);
-  const storageSF = Math.round(space * EFFICIENCY);
-  const annual = Math.round(storageSF * rent);
-  const monthly = Math.round(annual / 12);
-
-  calcSnapshot = {
-    inputSpace: space,
-    propertyType: type,
-    market,
-    rent,
-    storageSF,
-    annual,
-    monthly
+  const section = (title, body) => {
+    doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(0,0,0);
+    doc.text(title,40,y);y+=8;
+    doc.autoTable({
+      startY:y+4,
+      head:[['Field','Value']],
+      body:body,
+      theme:'grid',
+      headStyles:{fillColor:purple,textColor:[255,255,255],halign:'left'},
+      styles:{fontSize:10,cellPadding:5,valign:'middle'},
+      margin:{left:40,right:40}
+    });
+    y=doc.lastAutoTable.finalY+20;
   };
 
-  // Show results card
-  resultsCard.classList.remove('hidden');
+  // Sections
+  section("1. Property Information",[
+    ['Property Type',calcSnapshot.type],
+    ['Available Space',calcSnapshot.space.toLocaleString()+' SF'],
+    ['Market',calcSnapshot.market]
+  ]);
 
-  // Pixelized placeholders with flicker
-  showPixelizedValue(valStorage, `${storageSF.toLocaleString()} SF`);
-  showPixelizedValue(valRent, `$${rent}/SF`);
-  showPixelizedValue(valMonthly, `${formatCurrency(monthly)}`);
-  showPixelizedValue(valAnnual, `${formatCurrency(annual)}`);
+  section("2. Stuf Efficiency Adjustment",[
+    ['Efficiency Rate','70%'],
+    ['Storage SF',calcSnapshot.storageSF.toLocaleString()+' SF']
+  ]);
 
-  // randomize flicker timing
-  [valStorage,valRent,valMonthly,valAnnual].forEach(randomizeFlicker);
+  section("3. Rent Applied",[
+    ['Market Rent per SF','$'+calcSnapshot.rent+'/SF']
+  ]);
 
-  // schedule popup after 3s
-  clearTimeout(popupTimer);
-  popupTimer = setTimeout(()=> {
-    overlay.style.display = 'flex';
-  }, 3000);
-});
+  section("4. Revenue Projections",[
+    ['Estimated Monthly Revenue','$'+calcSnapshot.monthly.toLocaleString()],
+    ['Estimated Annual Revenue','$'+calcSnapshot.annual.toLocaleString()]
+  ]);
 
-/* --- Unlock flow --- */
-submitEmail.addEventListener('click', () => {
-  const email = (emailInput.value || '').trim();
-  if(!email || !email.includes('@')) { alert('Please enter a valid email'); return; }
+  // Closing text
+  doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(50,50,50);
+  const closing="Don’t let another six months slip by while that basement, that underused floor, or that back corner bleeds money. We’ve proven—again and again—that these “dead zones” can be turned into revenue machines with storage. The only question is: will you claim that income or keep watching it vanish?";
+  doc.text(closing,40,y,{maxWidth:doc.internal.pageSize.getWidth()-80});
 
-  // close popup
-  overlay.style.display = 'none';
-
-  // reveal real numbers instantly, stop flicker
-  [valStorage,valRent,valMonthly,valAnnual].forEach(el=>{
-    const real = el.dataset.real || el.textContent;
-    el.textContent = real;
-    el.classList.remove('flicker');
-    el.style.animationDelay = '';
-  });
-
-  // show actions
-  actions.classList.remove('hidden');
-
-  // set Talk to Stuf url
-  talkBtn.addEventListener('click', ()=> {
-    window.open('https://www.stufstorage.com/contact','_blank');
-  });
-});
-
-/* --- Download PDF (branded) --- */
-downloadBtn.addEventListener('click', () => {
-  if (!calcSnapshot){ alert('No calculation found.'); return; }
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({unit:'pt', format:'a4'});
-
-  // header bar
-  doc.setFillColor(94,61,179);
-  doc.rect(0, 0, doc.internal.pageSize.getWidth(), 64, 'F');
-
-  // logo - try remote PNG (may fail in some browsers due to CORS but often works)
-  try {
-    doc.addImage('https://www.stufstorage.com/wp-content/uploads/2022/01/stuf-logo.png','PNG',40,14,120,36);
-  } catch(e){ /* ignore if blocked */ }
-
-  // title
-  doc.setFontSize(14);
-  doc.setTextColor(255,255,255);
-  doc.setFont('helvetica','bold');
-  doc.text('Landlord Revenue Report', doc.internal.pageSize.getWidth()/2, 38, {align:'center'});
-
-  // body
-  doc.setFontSize(11);
-  doc.setTextColor(34,34,34);
-  doc.setFont('helvetica','normal');
-
-  let y = 100;
-  doc.text(`Property Type: ${calcSnapshot.propertyType}`, 40, y); y += 16;
-  doc.text(`Available Space: ${calcSnapshot.inputSpace.toLocaleString()} SF`, 40, y); y += 16;
-  doc.text(`Market: ${calcSnapshot.market}`, 40, y); y += 28;
-
-  doc.setFont('helvetica','bold');
-  doc.text('Projected Ancillary Revenue Opportunity', 40, y); y += 18;
-  doc.setFont('helvetica','normal');
-  doc.text(`Storage Conversion (70%): ${calcSnapshot.storageSF.toLocaleString()} SF`, 40, y); y += 14;
-  doc.text(`Applied Rent per SF: $${calcSnapshot.rent}/SF`, 40, y); y += 14;
-  doc.text(`Estimated Annual Revenue: ${formatCurrency(calcSnapshot.annual)}`, 40, y); y += 14;
-  doc.text(`Estimated Monthly Revenue: ${formatCurrency(calcSnapshot.monthly)}`, 40, y); y += 26;
-
-  // closing message (your exact copy)
-  const closing = "Don’t let another six months slip by while that basement, that underused floor, or that back corner bleeds money. We’ve proven—again and again—that these “dead zones” can be turned into revenue machines with storage. The only question is: will you claim that income or keep watching it vanish?";
-  doc.setFontSize(10);
-  doc.setTextColor(80,80,80);
-  doc.text(closing, 40, y, {maxWidth: doc.internal.pageSize.getWidth() - 80});
-  y += 40;
-
-  // footer
-  doc.setFontSize(9);
-  doc.setTextColor(140,140,140);
-  doc.text('© 2025 Stuf Storage | www.stufstorage.com', 40, doc.internal.pageSize.getHeight() - 40);
-
-  doc.save('Stuf_Landlord_Report.pdf');
-});
-
-/* Accessibility: close popup on Esc */
-document.addEventListener('keydown', (e) => {
-  if(e.key === 'Escape') overlay.style.display = 'none';
+  doc.save("Stuf_Landlord_Report.pdf");
 });
 </script>
 </body>
